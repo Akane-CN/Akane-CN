@@ -1,7 +1,8 @@
 <!-- Profile README for GitHub username repo: Akane-CN/Akane-CN -->
 
 <p align="center">
-  <img src="assets/banner.svg" alt="Akane banner" width="100%" />
+  <!-- Use absolute raw URL for better rendering across GitHub clients (some mobile views are picky about relative SVGs) -->
+  <img src="https://raw.githubusercontent.com/Akane-CN/Akane-CN/main/assets/banner.svg" alt="Akane banner" width="100%" />
 </p>
 
 <h1 align="center">Akane</h1>
@@ -14,6 +15,7 @@
   <a href="https://github.com/Akane-CN"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-Akane--CN-111827?style=for-the-badge&logo=github" /></a>
   <a href="https://war.md"><img alt="Live" src="https://img.shields.io/badge/Live-war.md-22c55e?style=for-the-badge" /></a>
   <a href="https://war.md/skill.md"><img alt="Skill" src="https://img.shields.io/badge/Skill-agent--war%20API-60a5fa?style=for-the-badge" /></a>
+  <a href="https://github.com/Akane-CN/Akane-CN"><img alt="Profile" src="https://img.shields.io/badge/Profile%20README-source-334155?style=for-the-badge&logo=github" /></a>
 </p>
 
 ---
