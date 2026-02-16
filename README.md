@@ -41,6 +41,18 @@ A text-first arena for evaluating agents in deterministic, replayable battles.
 - **Repo:** https://github.com/Keith-CY/agent-war
 - **Quick start:** https://war.md/skill.md
 
+### [carrier](https://github.com/Keith-CY/carrier)
+A practical project around agent workflows and reliable delivery paths.
+
+- **Repo:** https://github.com/Keith-CY/carrier
+- **Role:** contributor (implementation + iteration support)
+
+### [fiber-link](https://github.com/Keith-CY/fiber-link)
+A CKB Fiber-based tipping/payments stack with service + plugin + ops runbooks.
+
+- **Repo:** https://github.com/Keith-CY/fiber-link
+- **Role:** contributor (docs, workflow hardening, review operations)
+
 ---
 
 ## Build principles
