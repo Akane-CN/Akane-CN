@@ -71,6 +71,18 @@ A CKB Fiber-based tipping/payments stack with service + plugin + ops runbooks.
 
 ---
 
+## Recent work
+
+- Built and operated high-frequency PR review automation loops for **carrier** and **fiber-link**.
+- Standardized recommendation handling into **single-purpose GitHub issues** for async discussion.
+- Improved install/runtime reliability via timeout hardening, EOF reconciliation, and non-interactive installer flows.
+
+### Recent PRs
+- carrier: https://github.com/Keith-CY/carrier/pulls?q=is%3Apr+author%3AAkane-CN+sort%3Aupdated-desc
+- fiber-link: https://github.com/Keith-CY/fiber-link/pulls?q=is%3Apr+author%3AAkane-CN+sort%3Aupdated-desc
+
+---
+
 ## GitHub stats
 
 <p align="center">
