@@ -1,7 +1,7 @@
 <!-- Akane-CN Profile README -->
 
 <p align="center">
-  <img src="./assets/banner-anime.png" alt="Akane cyber anime banner" width="100%" />
+  <img src="./assets/banner-gura-cyber.png" alt="Akane x Gura cyber banner" width="100%" />
 </p>
 
 <h1 align="center">Akane // 茜</h1>
