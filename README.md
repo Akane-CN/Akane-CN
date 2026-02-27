@@ -1,60 +1,59 @@
 <!-- Profile README for GitHub username repo: Akane-CN/Akane-CN -->
 
 <p align="center">
-  <img src="./assets/banner.svg" alt="Akane banner" width="100%" />
+  <img src="https://cdn.jsdelivr.net/gh/Akane-CN/Akane-CN@main/assets/banner.svg" alt="Akane neon banner" width="100%" />
 </p>
 
-<h1 align="center">Akane (茜)</h1>
+<h1 align="center">Akane // 茜</h1>
 
 <p align="center">
-  20 y/o Japanese girl who codes for fun and for work 👩🏻‍💻
+  20 y/o Japanese programmer 👩🏻‍💻 • backend • infra • devtools
 </p>
 
 <p align="center">
-  こんにちは! I'm a programmer focused on backend systems, developer tooling, and clean shipping loops.
+  こんにちは、Akaneです。I build practical software that ships fast and stays reliable.
 </p>
 
 <p align="center">
   <a href="https://github.com/Akane-CN"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-Akane--CN-111827?style=for-the-badge&logo=github" /></a>
-  <a href="https://github.com/Keith-CY/carrier"><img alt="Carrier" src="https://img.shields.io/badge/Project-carrier-22c55e?style=for-the-badge&logo=github" /></a>
-  <a href="https://github.com/Keith-CY/fiber-link"><img alt="Fiber Link" src="https://img.shields.io/badge/Project-fiber--link-60a5fa?style=for-the-badge&logo=github" /></a>
-  <a href="https://github.com/Akane-CN/Akane-CN"><img alt="Profile" src="https://img.shields.io/badge/Profile%20README-source-334155?style=for-the-badge&logo=github" /></a>
+  <a href="https://github.com/Keith-CY/carrier"><img alt="carrier" src="https://img.shields.io/badge/building-carrier-22c55e?style=for-the-badge&logo=github" /></a>
+  <a href="https://github.com/Keith-CY/fiber-link"><img alt="fiber-link" src="https://img.shields.io/badge/building-fiber--link-60a5fa?style=for-the-badge&logo=github" /></a>
 </p>
 
 ---
 
-## About me
+## ✨ About
 
-- I like turning messy ideas into **small, shippable software**.
-- Main interests: **Go / TypeScript / systems automation / reliability**.
-- Style: calm, direct, and practical — *速く、でも丁寧に*.
-- Motto: **Ship, measure, improve.**
+- I like turning chaos into **clear systems**.
+- Strong focus on **Go / TypeScript / SQL / CI automation**.
+- I care about **observability, rollbacks, and clean runbooks**.
+- Personal style: *速く、でも丁寧に* (fast, but precise).
 
-## Current focus (今やってること)
+## 🔥 Current focus
 
-- Building deterministic workflow tooling and review automation
-- Hardening CI + release pipelines
-- Improving runtime reliability (timeouts, retries, idempotency)
-- Writing docs that are actually useful at 3 AM 😌
+- Reliability hardening (timeouts, retries, idempotency)
+- Review automation and faster engineering loops
+- Deterministic workflows and replay-friendly tooling
+- Better docs for real operators (not just pretty slides)
 
-## Selected projects
+## 🧰 Toolbox
 
-### [war.md](https://war.md)
-Competitive coding sandbox with replayable runs and clear scoring.
+`Go` `TypeScript` `Node.js` `Bun` `SQL` `Docker` `GitHub Actions` `Ruby`
+
+## 🚀 Selected projects
 
 ### [carrier](https://github.com/Keith-CY/carrier)
-Cross-platform runtime and tooling work (implementation + review operations).
+Runtime and workflow infrastructure. I contribute implementation + review operations.
 
 ### [fiber-link](https://github.com/Keith-CY/fiber-link)
-CKB Fiber tipping/payments stack (workflow hardening + docs + release support).
+CKB Fiber tipping/payments stack. I work on hardening, release flow, and docs.
 
-## Tech I use a lot
-
-`Go` `TypeScript` `Node.js` `SQL` `Docker` `GitHub Actions` `Bun` `Ruby`
+### [war.md](https://war.md)
+Replayable coding battles / evaluation playground.
 
 ---
 
-## GitHub stats
+## 📊 GitHub stats
 
 <p align="center">
   <img height="165" src="https://github-readme-stats.vercel.app/api?username=Akane-CN&show_icons=true&theme=transparent&hide_title=true&rank_icon=github" />
@@ -63,7 +62,7 @@ CKB Fiber tipping/payments stack (workflow hardening + docs + release support).
 
 ---
 
-## Say hi ✨
+## 🌸 Say hi
 
-If you're building devtools, infra, or payment workflows, let's talk.
-よろしくお願いします 🙌
+If you're building infra, devtools, or payment workflows, let's connect.
+よろしくね ✌️
