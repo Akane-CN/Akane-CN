@@ -28,7 +28,7 @@
     Akane
   </text>
   <text x="82" y="196" fill="#cbd5e1" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="26" font-weight="500">
-    Agent systems • deterministic games • practical infrastructure
+    Backend systems • deterministic games • practical infrastructure
   </text>
 
   <!-- tagline chips -->
@@ -40,7 +40,7 @@
     <text x="270" y="249" fill="#86efac">ship small</text>
 
     <rect x="422" y="226" width="210" height="34" rx="17" fill="#0f172a" stroke="#334155"/>
-    <text x="446" y="249" fill="#e9d5ff">agent-first APIs</text>
+    <text x="446" y="249" fill="#e9d5ff">reliable APIs</text>
   </g>
 
   <!-- corner mark -->
