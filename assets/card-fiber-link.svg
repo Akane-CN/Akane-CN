@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="580" height="232" viewBox="0 0 580 232" role="img" aria-label="fiber-link">
+  <defs>
+    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#28e6ff"/>
+      <stop offset="1" stop-color="#28e6ff" stop-opacity="0.1"/>
+    </linearGradient>
+    <filter id="g" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="30"/></filter>
+    
+    <pattern id="gc" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#221c36" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="580" height="232" rx="18" fill="#07070d"/>
+  <rect width="580" height="232" rx="18" fill="url(#gc)" opacity="0.45"/>
+  <circle cx="520" cy="40" r="90" fill="#28e6ff" opacity="0.16" filter="url(#g)"/>
+  <path d="M410.3 213.8C440.6 213.8 458.5 192.4 458.5 157.5C458.5 122.5 440.6 101.1 410.3 101.1C380.1 101.1 362.1 122.6 362.1 157.5C362.1 192.4 380.1 213.8 410.3 213.8ZM410.3 190.3C398.2 190.3 390.8 177.9 390.8 157.5C390.8 137.1 398.2 124.5 410.3 124.5C422.4 124.5 429.8 137.1 429.8 157.5C429.8 177.9 422.4 190.3 410.3 190.3Z M466.9 212.0H550.7V188.4H508.2V188.3L525.9 173.9C540.4 162.1 550.4 152.2 550.4 135.9C550.4 114.2 532.9 101.1 508.7 101.1C482.2 101.1 465.8 116.9 465.8 142.3H493.7C493.7 130.9 499.8 124.5 508.6 124.5C516.7 124.5 522.2 129.8 522.2 137.6C522.2 147.0 514.0 152.7 508.0 157.7L466.9 190.8Z" fill="#28e6ff" opacity="0.10"/>
+  <rect x="1" y="1" width="578" height="230" rx="18" fill="none" stroke="#221c36" stroke-width="2"/>
+  <rect x="0" y="40" width="4" height="152" fill="url(#edge)"/>
+  <path d="M48.2 51.4H44.0V50.9C44.0 49.4 44.6 48.8 46.1 48.8H48.2V42.9H44.0C38.6 42.9 36.2 44.9 36.2 49.5V51.4H32.4V57.3H36.2V72.0H44.0V57.3H48.2Z M49.7 72.0H57.5V51.4H49.7ZM53.6 50.0C56.0 50.0 57.8 48.4 57.8 46.2C57.8 44.1 56.0 42.5 53.6 42.5C51.2 42.5 49.4 44.1 49.4 46.2C49.4 48.4 51.2 50.0 53.6 50.0Z M73.4 72.5C78.8 72.5 82.3 68.2 82.3 61.6C82.3 55.3 78.7 50.9 73.5 50.9C70.8 50.9 69.0 51.9 67.7 54.1H67.7V42.9H59.9V72.0H67.6V68.8H67.6C68.6 71.2 70.7 72.5 73.4 72.5ZM71.1 66.3C68.9 66.3 67.4 64.5 67.4 61.6C67.4 58.8 68.9 57.0 71.1 57.0C73.2 57.0 74.4 58.8 74.4 61.6C74.4 64.5 73.2 66.3 71.1 66.3Z M94.1 72.5C99.5 72.5 103.9 69.5 104.6 65.3H97.7C97.3 66.4 96.0 67.0 94.4 67.0C92.1 67.0 90.7 65.8 90.7 63.6H104.7V61.5C104.7 55.3 100.2 50.9 93.9 50.9C87.6 50.9 83.1 55.4 83.1 61.7C83.1 68.0 87.6 72.5 94.1 72.5ZM90.7 59.2C91.0 57.5 92.2 56.5 94.1 56.5C96.0 56.5 97.2 57.5 97.5 59.2Z M106.2 72.0H114.0V62.1C114.0 59.4 115.6 57.6 118.0 57.6H120.9V51.4H118.9C116.1 51.4 114.6 52.4 113.8 55.1H113.8V51.4H106.2Z M136.2 57.9H122.5V63.8H136.2Z M147.0 42.9H139.2V72.0H147.0Z M149.4 72.0H157.2V51.4H149.4ZM153.3 50.0C155.7 50.0 157.4 48.4 157.4 46.2C157.4 44.1 155.7 42.5 153.3 42.5C150.8 42.5 149.1 44.1 149.1 46.2C149.1 48.4 150.8 50.0 153.3 50.0Z M167.4 61.1C167.4 58.7 168.4 57.5 170.2 57.5C172.1 57.5 173.1 58.7 173.1 60.8V72.0H180.9V59.0C180.9 54.0 178.6 50.9 174.0 50.9C170.7 50.9 168.6 52.4 167.3 54.8V51.4H159.5V72.0H167.4Z M183.3 72.0H191.1V66.3L192.2 64.9L196.6 72.0H205.5L198.0 60.4L205.2 51.4H196.4L191.2 58.1H191.1V42.9H183.3Z" fill="#f4f2f8"/>
+  <text x="32" y="100" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#8f8ba3">CKB Fiber tipping &amp; payments stack</text>
+  <text x="32" y="132" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="15" fill="#c9c5d8"><tspan fill="#28e6ff">▸</tspan> milestone closeout reviews</text>
+<text x="32" y="155" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="15" fill="#c9c5d8"><tspan fill="#28e6ff">▸</tspan> workflow hardening + smoke validation</text>
+<text x="32" y="178" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="15" fill="#c9c5d8"><tspan fill="#28e6ff">▸</tspan> runbooks + acceptance evidence</text>
+  <text x="32" y="216" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="11" font-weight="700" fill="#28e6ff" letter-spacing="1.5">GITHUB.COM/KEITH-CY/FIBER-LINK ↗</text>
+</svg>
