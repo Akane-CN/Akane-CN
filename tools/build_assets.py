@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Generate the self-contained SVG assets used by the profile README.
+"""Build the SVG assets for the profile README.
 
-Everything is vector, dependency-free at view time, and renders identically on
-every OS: the wordmark, the numbers and all Japanese text are converted to
-paths at build time, so viewers don't need any particular font installed.
+Everything is vector except the portrait, which is embedded into hero.svg as
+base64 so the SVG works inside GitHub's <img> sandbox (external hrefs don't
+load there). Display type is converted to paths at build time so it renders
+identically on every OS.
 
-    pip install fonttools
+    pip install fonttools pillow
     python3 tools/build_assets.py
 """
+import base64
 from pathlib import Path
 
 from fontTools.pens.svgPathPen import SVGPathPen
@@ -16,27 +18,24 @@ from fontTools.ttLib import TTFont
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "assets"
+PHOTO = OUT / "akane.jpg"
 
-FONT_DISPLAY = "/usr/share/fonts/opentype/inter/InterDisplay-Black.otf"
-FONT_MONO = "/usr/share/fonts/truetype/jetbrains-mono/JetBrainsMono-Bold.ttf"
+FONT_SERIF = "/usr/share/fonts/truetype/crosextra/Caladea-Regular.ttf"
+FONT_SERIF_I = "/usr/share/fonts/truetype/crosextra/Caladea-Italic.ttf"
+FONT_SANS_L = "/usr/share/fonts/opentype/inter/InterDisplay-Light.otf"
 FONT_JP = "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf"
 
-# ---- palette -------------------------------------------------------------
-INK = "#07070d"
-INK2 = "#100a1d"
-PANEL = "#0e0b19"
-LINE = "#221c36"
-AKANE = "#ff2a55"      # 茜 — madder crimson, pushed to neon
-AKANE_DEEP = "#9f1232"
-CYAN = "#28e6ff"
-AMBER = "#ffb547"
-MINT = "#5cf2b0"
-TEXT = "#f4f2f8"
-MUTED = "#8f8ba3"
-DIM = "#5d5975"
+# palette, sampled from the portrait
+GREY = "#aaadb7"       # photo background
+GREY_D = "#9a9da8"
+PAPER = "#eceef1"
+INK = "#15161a"
+MUTE = "#5c5f6a"
+GOLD = "#c9a24a"
+WHITE = "#f6f6f8"
 
-SANS = "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace"
+MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+SANS = "Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
 
 
 class Face:
@@ -56,32 +55,59 @@ class Face:
         return sum(self.hmtx[n][0] * s for n in names) + tracking * (len(names) - 1)
 
     def path(self, text, size, x, y, tracking=0, align="left"):
-        """Return SVG path data for `text` with its baseline at (x, y)."""
         s = size / self.upm
         w = self.width(text, size, tracking)
         if align == "center":
             x -= w / 2
         elif align == "right":
             x -= w
-        parts = []
-        cx = x
+        parts, cx = [], x
         for name in self._names(text):
             pen = SVGPathPen(self.glyphs, ntos=lambda v: f"{v:.1f}")
             self.glyphs[name].draw(TransformPen(pen, (s, 0, 0, -s, cx, y)))
-            cmds = pen.getCommands()
-            if cmds:
-                parts.append(cmds)
+            if pen.getCommands():
+                parts.append(pen.getCommands())
             cx += self.hmtx[name][0] * s + tracking
         return " ".join(parts), w
 
 
-display = Face(FONT_DISPLAY)
-mono = Face(FONT_MONO)
-jp = Face(FONT_JP)
+serif, serif_i, sans_l, jp = Face(FONT_SERIF), Face(FONT_SERIF_I), Face(FONT_SANS_L), Face(FONT_JP)
 
 
 def esc(t):
     return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def P(face, text, size, x, y, fill, align="left", tracking=0, extra=""):
+    d, _ = face.path(text, size, x, y, tracking=tracking, align=align)
+    return f'<path d="{d}" fill="{fill}" {extra}/>'
+
+
+def V(face, text, size, x, y, fill, gap=1.12):
+    """Vertical Japanese: one glyph per line, centred on x."""
+    out = []
+    for i, ch in enumerate(text):
+        if ch in "ー—":
+            out.append(f'<g transform="translate({x},{y + i * size * gap - size * 0.38}) rotate(90)">'
+                       f'<path d="{face.path(ch, size, 0, size * 0.38, align="center")[0]}" fill="{fill}"/></g>')
+        elif ch in "、。":
+            out.append(P(face, ch, size, x + size * 0.55, y + i * size * gap - size * 0.55, fill, "center"))
+        else:
+            out.append(P(face, ch, size, x, y + i * size * gap, fill, "center"))
+    return "".join(out)
+
+
+def T(text, size, x, y, fill, align="start", fam=MONO, weight=700, ls=0, extra=""):
+    return (f'<text x="{x}" y="{y}" text-anchor="{align}" font-family="{fam}" font-size="{size}" '
+            f'font-weight="{weight}" fill="{fill}" letter-spacing="{ls}" {extra}>{esc(text)}</text>')
+
+
+NOISE = ('<filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" '
+         'stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>')
+
+
+def grain(W, H, op, x=0, y=0):
+    return f'<rect x="{x}" y="{y}" width="{W}" height="{H}" filter="url(#noise)" opacity="{op}" style="mix-blend-mode:overlay"/>'
 
 
 def write(name, svg):
@@ -89,306 +115,142 @@ def write(name, svg):
     print(f"wrote assets/{name} ({len(svg) // 1024} KB)")
 
 
-def grid_defs(pid="grid", step=40):
-    return f'''
-    <pattern id="{pid}" width="{step}" height="{step}" patternUnits="userSpaceOnUse">
-      <path d="M {step} 0 L 0 0 0 {step}" fill="none" stroke="{LINE}" stroke-width="1"/>
-    </pattern>'''
-
-
-# ---------------------------------------------------------------------------
-# HERO
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- hero
 def hero():
-    W, H = 1200, 440
-    word, word_w = display.path("AKANE", 150, 72, 262, tracking=-7)
-    kanji, _ = jp.path("茜", 262, 925, 326, align="center")
-    tagline, tag_w = jp.path("速く、でも丁寧に", 19, 96, 403)
-    typed = "$ ship fast. stay precise. read the logs."
-    typed_w = mono.width(typed, 19)
-
-    # synthwave slices across the lower half of the sun
-    slices = "".join(
-        f'<rect x="700" y="{y}" width="450" height="{h}" fill="{INK}" opacity="0.92"/>'
-        for y, h in [(238, 5), (258, 7), (282, 9), (310, 12), (344, 15)]
-    )
-
+    W, H = 1200, 660
+    photo = base64.b64encode(PHOTO.read_bytes()).decode()
+    pw = 520  # photo column
     return f'''
-<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="Akane — backend, infra, devtools, reliability">
-  <title>Akane // 茜</title>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="Akane — software engineer, Japan">
+  <title>Akane / 茜</title>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="{INK}"/>
-      <stop offset="1" stop-color="{INK2}"/>
+    {NOISE}
+    <linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="{GREY}" stop-opacity="0"/>
+      <stop offset="1" stop-color="{GREY}" stop-opacity="1"/>
     </linearGradient>
-    <radialGradient id="sun" cx="0.5" cy="0.45" r="0.6">
-      <stop offset="0" stop-color="#ff6b8a"/>
-      <stop offset="0.55" stop-color="{AKANE}"/>
-      <stop offset="1" stop-color="{AKANE_DEEP}"/>
-    </radialGradient>
-    <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="{AKANE}" stop-opacity="0"/>
-      <stop offset="0.2" stop-color="{AKANE}"/>
-      <stop offset="0.8" stop-color="{CYAN}"/>
-      <stop offset="1" stop-color="{CYAN}" stop-opacity="0"/>
+    <linearGradient id="fadeV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.75" stop-color="{GREY}" stop-opacity="0"/>
+      <stop offset="1" stop-color="{GREY}" stop-opacity="0.9"/>
     </linearGradient>
-    <linearGradient id="scan" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
-      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.05"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="{GOLD}" stop-opacity="0"/>
+      <stop offset="0.15" stop-color="{GOLD}"/>
+      <stop offset="1" stop-color="{GOLD}" stop-opacity="0.2"/>
     </linearGradient>
-    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="28"/>
-    </filter>
-    <filter id="softglow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="3" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    {grid_defs()}
-    <clipPath id="sliceA"><rect x="60" y="150" width="620" height="22"/></clipPath>
-    <clipPath id="sliceB"><rect x="60" y="205" width="620" height="16"/></clipPath>
-    <clipPath id="typeclip">
-      <rect x="96" y="340" width="{typed_w + 4:.0f}" height="34">
-        <animate attributeName="width" values="0;0;{typed_w + 4:.0f};{typed_w + 4:.0f}" keyTimes="0;0.08;0.6;1" dur="7s" begin="0s" repeatCount="indefinite" calcMode="linear"/>
-      </rect>
-    </clipPath>
+    <clipPath id="photo"><rect x="0" y="0" width="{pw + 160}" height="{H}"/></clipPath>
   </defs>
 
-  <!-- background -->
-  <rect width="{W}" height="{H}" fill="url(#bg)"/>
-  <rect width="{W}" height="{H}" fill="url(#grid)" opacity="0.55"/>
-  <rect x="0" y="0" width="{W}" height="{H}" fill="none" stroke="{LINE}" stroke-width="2"/>
+  <rect width="{W}" height="{H}" fill="{GREY}"/>
 
-  <!-- the sun -->
-  <circle cx="925" cy="225" r="185" fill="{AKANE}" opacity="0.35" filter="url(#glow)">
-    <animate attributeName="opacity" values="0.3;0.5;0.3" dur="6s" repeatCount="indefinite"/>
-  </circle>
-  <circle cx="925" cy="225" r="168" fill="url(#sun)">
-    <animate attributeName="r" values="166;171;166" dur="6s" repeatCount="indefinite"/>
-  </circle>
-  {slices}
-  <!-- 茜 cut into the sun like a seal -->
-  <path d="{kanji}" fill="{INK}" opacity="0.88"/>
-  <path d="{kanji}" fill="none" stroke="#ffd0da" stroke-width="1" opacity="0.5"/>
-
-  <!-- wordmark with chromatic glitch slices -->
-  <path d="{word}" fill="{CYAN}" clip-path="url(#sliceA)" opacity="0">
-    <animate attributeName="opacity" values="0;0;0.9;0;0;0;0;0.7;0;0" keyTimes="0;0.30;0.32;0.34;0.5;0.72;0.74;0.76;0.78;1" dur="5s" repeatCount="indefinite"/>
-    <animateTransform attributeName="transform" type="translate" values="-6 0;-6 0;8 0;-6 0" keyTimes="0;0.3;0.74;1" dur="5s" repeatCount="indefinite"/>
-  </path>
-  <path d="{word}" fill="{AKANE}" clip-path="url(#sliceB)" opacity="0">
-    <animate attributeName="opacity" values="0;0;0.9;0;0;0.8;0;0" keyTimes="0;0.31;0.33;0.35;0.73;0.75;0.77;1" dur="5s" repeatCount="indefinite"/>
-    <animateTransform attributeName="transform" type="translate" values="7 0;7 0;-9 0;7 0" keyTimes="0;0.31;0.75;1" dur="5s" repeatCount="indefinite"/>
-  </path>
-  <path d="{word}" fill="{TEXT}"/>
-
-  <!-- subtitle -->
-  <text x="78" y="305" font-family="{SANS}" font-size="24" font-weight="600" fill="#c9c5d8" letter-spacing="0.5">
-    Backend <tspan fill="{AKANE}">·</tspan> Infra <tspan fill="{AKANE}">·</tspan> Devtools <tspan fill="{AKANE}">·</tspan> Reliability
-  </text>
-
-  <!-- typed line -->
-  <g clip-path="url(#typeclip)">
-    <text x="96" y="364" font-family="{MONO}" font-size="19" font-weight="700" fill="{MINT}">{typed}</text>
+  <!-- portrait -->
+  <g clip-path="url(#photo)">
+    <image xlink:href="data:image/jpeg;base64,{photo}" x="-20" y="-40" width="{pw + 180}" height="{(pw + 180) * 1.3333:.0f}" preserveAspectRatio="xMidYMin slice"/>
+    <rect x="{pw - 40}" y="0" width="200" height="{H}" fill="url(#fade)"/>
+    <rect x="0" y="0" width="{pw + 160}" height="{H}" fill="url(#fadeV)"/>
   </g>
-  <rect x="{96 + typed_w + 6:.0f}" y="346" width="10" height="22" fill="{MINT}">
-    <animate attributeName="x" values="96;96;{96 + typed_w + 6:.0f};{96 + typed_w + 6:.0f}" keyTimes="0;0.08;0.6;1" dur="7s" repeatCount="indefinite" calcMode="linear"/>
-    <animate attributeName="opacity" values="1;0;1" dur="0.9s" repeatCount="indefinite"/>
-  </rect>
-  <rect x="78" y="340" width="4" height="34" fill="{AKANE}"/>
 
-  <!-- japanese tagline -->
-  <rect x="78" y="391" width="8" height="8" fill="{AKANE}"/>
-  <path d="{tagline}" fill="{MUTED}"/>
-  <text x="{96 + tag_w + 12:.0f}" y="403" font-family="{MONO}" font-size="13" fill="{DIM}">// fast, but precise</text>
+  <!-- top meta -->
+  {T("AKANE  —  PROFILE", 11, 600, 62, INK, ls=3)}
+  {T("VOL. 20  ·  2026", 11, W - 60, 62, INK, "end", ls=3)}
+  <rect x="600" y="76" width="{W - 660}" height="1" fill="{INK}" opacity="0.5"/>
 
-  <!-- HUD corners -->
-  <g font-family="{MONO}" font-size="12" font-weight="700" fill="{DIM}" letter-spacing="1.5">
-    <text x="78" y="52">PROFILE.v3 — AKANE // 茜</text>
-    <text x="{W - 78}" y="52" text-anchor="end">20 Y/O · JAPAN · UTC+9</text>
-    <text x="{W - 100}" y="{H - 36}" text-anchor="end" fill="{MUTED}">STATUS: BUILDING</text>
+  <!-- name -->
+  {P(serif, "Akane", 168, 592, 300, INK, tracking=-5)}
+  {P(serif_i, "builds the quiet parts of software.", 34, 600, 352, INK, tracking=-0.3)}
+  <rect x="600" y="384" width="440" height="1.5" fill="url(#gold)"/>
+  {T("SOFTWARE ENGINEER  ·  JAPAN  ·  UTC+9", 12, 600, 418, INK, ls=2.5)}
+  {T("20 Y/O  ·  2006 → NOW  ·  BACKEND, INFRA, TOOLS", 12, 600, 442, MUTE, ls=2.5)}
+
+  <!-- vertical title -->
+  {V(jp, "速く、でも丁寧に。", 44, 1128, 140, INK, 1.1)}
+  {V(jp, "二十歳のソフトウェアエンジニア", 15, 1082, 128, MUTE, 1.18)}
+
+  <!-- seal -->
+  <g transform="translate(1000,560)">
+    <circle r="30" fill="none" stroke="{GOLD}" stroke-width="1.5"/>
+    <circle r="24" fill="none" stroke="{GOLD}" stroke-width="0.6"/>
+    {P(jp, "茜", 28, 0, 10, GOLD, "center")}
   </g>
-  <circle cx="{W - 86}" cy="{H - 40}" r="4" fill="{MINT}" filter="url(#softglow)">
-    <animate attributeName="opacity" values="1;0.2;1" dur="1.6s" repeatCount="indefinite"/>
-  </circle>
-  <rect x="78" y="63" width="180" height="2" fill="url(#rule)"/>
-  <rect x="{W - 258}" y="63" width="180" height="2" fill="url(#rule)"/>
+  {T("AVAILABLE", 11, 616, 598, INK, ls=3)}
+  <circle cx="603" cy="594" r="3.5" fill="{GOLD}"><animate attributeName="opacity" values="1;0.25;1" dur="2.4s" repeatCount="indefinite"/></circle>
+  {T("github.com/Akane-CN", 11, 716, 598, MUTE, ls=1)}
 
-  <!-- scanline sweep -->
-  <rect x="0" y="-120" width="{W}" height="120" fill="url(#scan)">
-    <animateTransform attributeName="transform" type="translate" from="0 0" to="0 {H + 240}" dur="8s" repeatCount="indefinite"/>
-  </rect>
-
-  <!-- bottom rule -->
-  <rect x="0" y="{H - 3}" width="{W}" height="3" fill="url(#rule)"/>
+  {grain(W, H, 0.10)}
 </svg>'''
 
 
-# ---------------------------------------------------------------------------
-# STACK
-# ---------------------------------------------------------------------------
-def chip_row(label, items, y, color):
-    out = [f'<text x="40" y="{y + 25}" font-family="{MONO}" font-size="12" font-weight="700" fill="{color}" letter-spacing="2">{label}</text>']
-    x = 160
-    for item in items:
-        w = mono.width(item, 16) + 32
-        out.append(
-            f'<rect x="{x:.0f}" y="{y}" width="{w:.0f}" height="40" rx="8" fill="{PANEL}" stroke="{LINE}"/>'
-            f'<rect x="{x:.0f}" y="{y + 11}" width="3" height="18" fill="{color}"/>'
-            f'<text x="{x + 18:.0f}" y="{y + 26}" font-family="{MONO}" font-size="16" font-weight="700" fill="{TEXT}">{esc(item)}</text>'
-        )
-        x += w + 12
-    return "\n".join(out)
-
-
-def stack():
-    W, H = 1200, 196
+# --------------------------------------------------------------------------- works
+def works():
+    W, H = 1200, 330
     rows = [
-        ("LANG", ["Go", "TypeScript", "JavaScript", "SQL", "Ruby"], AKANE),
-        ("RUNTIME", ["Node.js", "Bun", "Docker", "GitHub Actions"], CYAN),
-        ("STYLE", ["small PRs", "clear contracts", "strict CI", "ship → measure → improve"], AMBER),
+        ("01", "Runtime & workflow tooling", "Go · TypeScript · CI", "2025 —"),
+        ("02", "Payments on CKB Fiber", "TypeScript · payment channels", "2025"),
+        ("03", "Replayable battle arena", "Web · deterministic runs", "2026"),
     ]
-    body = "\n".join(chip_row(l, i, 22 + k * 56, c) for k, (l, i, c) in enumerate(rows))
-    return f'''
-<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="Tech stack">
-  <defs>{grid_defs("g2")}</defs>
-  <rect width="{W}" height="{H}" rx="18" fill="{INK}"/>
-  <rect width="{W}" height="{H}" rx="18" fill="url(#g2)" opacity="0.5"/>
-  <rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="18" fill="none" stroke="{LINE}" stroke-width="2"/>
-  {body}
-</svg>'''
-
-
-# ---------------------------------------------------------------------------
-# PROJECT CARDS
-# ---------------------------------------------------------------------------
-def card(name, index, title, subtitle, bullets, color, href_label):
-    W, H = 580, 232
-    subtitle, href_label = esc(subtitle), esc(href_label)
-    bullets = [esc(b) for b in bullets]
-    t, _ = display.path(title, 40, 32, 72, tracking=-1)
-    idx, _ = display.path(index, 150, W - 24, H - 20, align="right")
-    lines = "\n".join(
-        f'<text x="32" y="{132 + i * 23}" font-family="{MONO}" font-size="15" fill="#c9c5d8"><tspan fill="{color}">▸</tspan> {b}</text>'
-        for i, b in enumerate(bullets)
-    )
-    return f'''
-<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="{title}">
-  <defs>
-    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="{color}"/>
-      <stop offset="1" stop-color="{color}" stop-opacity="0.1"/>
-    </linearGradient>
-    <filter id="g" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="30"/></filter>
-    {grid_defs("gc", 32)}
-  </defs>
-  <rect width="{W}" height="{H}" rx="18" fill="{INK}"/>
-  <rect width="{W}" height="{H}" rx="18" fill="url(#gc)" opacity="0.45"/>
-  <circle cx="{W - 60}" cy="40" r="90" fill="{color}" opacity="0.16" filter="url(#g)"/>
-  <path d="{idx}" fill="{color}" opacity="0.10"/>
-  <rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="18" fill="none" stroke="{LINE}" stroke-width="2"/>
-  <rect x="0" y="40" width="4" height="{H - 80}" fill="url(#edge)"/>
-  <path d="{t}" fill="{TEXT}"/>
-  <text x="32" y="100" font-family="{SANS}" font-size="15" font-weight="600" fill="{MUTED}">{subtitle}</text>
-  {lines}
-  <text x="32" y="{H - 16}" font-family="{MONO}" font-size="11" font-weight="700" fill="{color}" letter-spacing="1.5">{href_label}</text>
-</svg>'''
-
-
-# ---------------------------------------------------------------------------
-# STATS
-# ---------------------------------------------------------------------------
-def stats():
-    W, H = 1200, 270
-    tiles = [
-        ("127", "MERGED PRS", AKANE),
-        ("1,224", "CONTRIBUTIONS / YR", CYAN),
-        ("514", "PR REVIEWS / YR", AMBER),
-        ("409", "ISSUES OPENED / YR", MINT),
-    ]
-    x0, tw, gap = 40, 268, 16
     body = []
-    for i, (num, label, color) in enumerate(tiles):
-        x = x0 + i * (tw + gap)
-        n, _ = display.path(num, 58, x + 24, 108, tracking=-2)
-        body.append(f'''
-  <g>
-    <animateTransform attributeName="transform" type="translate" values="0 12;0 0" dur="0.6s" begin="{0.15 * i:.2f}s" fill="freeze" calcMode="spline" keySplines="0.2 0.8 0.2 1"/>
-    <rect x="{x}" y="30" width="{tw}" height="128" rx="14" fill="{PANEL}" stroke="{LINE}"/>
-    <rect x="{x + 24}" y="46" width="34" height="3" fill="{color}"/>
-    <path d="{n}" fill="{TEXT}"/>
-    <text x="{x + 24}" y="138" font-family="{MONO}" font-size="12" font-weight="700" fill="{MUTED}" letter-spacing="1.5">{label}</text>
-  </g>''')
-    bar_x, bar_w = 40, W - 80
-    ts = 0.986
+    for i, (n, t, s, yr) in enumerate(rows):
+        y = 96 + i * 78
+        body.append(f'<rect x="60" y="{y + 26}" width="{W - 120}" height="1" fill="{INK}" opacity="0.12"/>')
+        body.append(T(n, 11, 60, y, MUTE, ls=3))
+        body.append(P(serif, t, 32, 120, y + 8, INK, tracking=-0.5))
+        body.append(T(s, 11, 720, y, MUTE, ls=1.5))
+        body.append(T(yr, 11, 1000, y, MUTE, ls=1.5))
+        body.append(P(sans_l, "↗", 30, W - 60, y + 6, GOLD, "right"))
     return f'''
-<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="GitHub snapshot">
-  <defs>{grid_defs("g3")}
-    <linearGradient id="ts" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="{AKANE}"/><stop offset="1" stop-color="{CYAN}"/></linearGradient>
-  </defs>
-  <rect width="{W}" height="{H}" rx="18" fill="{INK}"/>
-  <rect width="{W}" height="{H}" rx="18" fill="url(#g3)" opacity="0.5"/>
-  <rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="18" fill="none" stroke="{LINE}" stroke-width="2"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="Selected work">
+  <defs>{NOISE}</defs>
+  <rect width="{W}" height="{H}" fill="{PAPER}"/>
+  {T("SELECTED WORK", 11, 60, 48, INK, ls=3)}
+  {T("( 03 )", 11, W - 60, 48, MUTE, "end", ls=3)}
+  <rect x="60" y="60" width="{W - 120}" height="1" fill="{INK}" opacity="0.5"/>
   {"".join(body)}
-  <text x="{bar_x}" y="200" font-family="{MONO}" font-size="12" font-weight="700" fill="{MUTED}" letter-spacing="1.5">LANGUAGES · OWNED REPOS</text>
-  <text x="{W - 40}" y="200" text-anchor="end" font-family="{MONO}" font-size="12" font-weight="700" fill="{DIM}" letter-spacing="1.5">SNAPSHOT 2026-02-27 UTC · NO EXTERNAL WIDGETS</text>
-  <rect x="{bar_x}" y="214" width="{bar_w}" height="14" rx="7" fill="{PANEL}" stroke="{LINE}"/>
-  <rect x="{bar_x}" y="214" width="{bar_w * ts:.0f}" height="14" rx="7" fill="url(#ts)">
-    <animate attributeName="width" from="0" to="{bar_w * ts:.0f}" dur="1.4s" begin="0.4s" fill="freeze" calcMode="spline" keySplines="0.2 0.8 0.2 1"/>
-  </rect>
-  <text x="{bar_x}" y="250" font-family="{MONO}" font-size="13" font-weight="700" fill="{TEXT}">TypeScript <tspan fill="{AKANE}">98.6%</tspan></text>
-  <text x="{W - 40}" y="250" text-anchor="end" font-family="{MONO}" font-size="13" font-weight="700" fill="{MUTED}">JavaScript <tspan fill="{CYAN}">1.4%</tspan></text>
+  {grain(W, H, 0.08)}
 </svg>'''
 
 
-# ---------------------------------------------------------------------------
-# FOOTER
-# ---------------------------------------------------------------------------
-def footer():
-    W, H = 1200, 150
-    yoro, yw = jp.path("よろしくお願いします", 40, W / 2, 72, tracking=2, align="center")
+# --------------------------------------------------------------------------- numbers
+def numbers():
+    W, H = 1200, 220
+    tiles = [("1,224", "CONTRIBUTIONS / 12 MO"), ("514", "PR REVIEWS / 12 MO"), ("409", "ISSUES OPENED / 12 MO"), ("127", "PULL REQUESTS MERGED")]
+    body = []
+    for i, (n, l) in enumerate(tiles):
+        x = 60 + i * 275
+        body.append(f'<rect x="{x}" y="60" width="28" height="1.5" fill="{GOLD}"/>')
+        body.append(P(serif, n, 64, x, 132, INK, tracking=-2))
+        body.append(T(l, 10, x, 164, MUTE, ls=2.5))
     return f'''
-<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="よろしくお願いします — see you in the logs">
-  <defs>
-    <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="{AKANE}" stop-opacity="0"/>
-      <stop offset="0.5" stop-color="{AKANE}"/>
-      <stop offset="1" stop-color="{CYAN}" stop-opacity="0"/>
-    </linearGradient>
-    <filter id="g" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="40"/></filter>
-    {grid_defs("g4")}
+<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="GitHub numbers">
+  <defs>{NOISE}</defs>
+  <rect width="{W}" height="{H}" fill="{PAPER}"/>
+  {"".join(body)}
+  {T("HAND-KEPT SNAPSHOT · 2026-02-27 UTC · NO THIRD-PARTY WIDGETS", 10, W - 60, 196, MUTE, "end", ls=2)}
+  {grain(W, H, 0.08)}
+</svg>'''
+
+
+# --------------------------------------------------------------------------- footer
+def footer():
+    W, H = 1200, 170
+    return f'''
+<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="よろしくお願いします">
+  <defs>{NOISE}
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="{GOLD}" stop-opacity="0"/><stop offset="0.5" stop-color="{GOLD}"/><stop offset="1" stop-color="{GOLD}" stop-opacity="0"/></linearGradient>
   </defs>
-  <rect width="{W}" height="{H}" rx="18" fill="{INK}"/>
-  <rect width="{W}" height="{H}" rx="18" fill="url(#g4)" opacity="0.5"/>
-  <ellipse cx="{W / 2}" cy="{H}" rx="360" ry="80" fill="{AKANE}" opacity="0.22" filter="url(#g)"/>
-  <rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="18" fill="none" stroke="{LINE}" stroke-width="2"/>
-  <path d="{yoro}" fill="{TEXT}"/>
-  <rect x="{W / 2 - 220}" y="91" width="440" height="2" fill="url(#rule)">
-    <animate attributeName="width" from="0" to="440" dur="1.6s" begin="0.2s" fill="freeze" calcMode="spline" keySplines="0.2 0.8 0.2 1"/>
+  <rect width="{W}" height="{H}" fill="{GREY}"/>
+  {P(jp, "よろしくお願いします", 30, W / 2, 78, INK, "center", tracking=3)}
+  <rect x="{W / 2 - 160}" y="98" width="320" height="1.5" fill="url(#g2)">
+    <animate attributeName="width" values="0;320" dur="1.6s" begin="0.2s" fill="freeze" calcMode="spline" keySplines="0.2 0.8 0.2 1"/>
+    <animate attributeName="x" values="{W / 2};{W / 2 - 160}" dur="1.6s" begin="0.2s" fill="freeze" calcMode="spline" keySplines="0.2 0.8 0.2 1"/>
   </rect>
-  <text x="{W / 2}" y="122" text-anchor="middle" font-family="{MONO}" font-size="14" font-weight="700" fill="{MUTED}" letter-spacing="2">SEE YOU IN THE LOGS <tspan fill="{AKANE}">✦</tspan> AKANE // 茜</text>
+  {T("AKANE  ·  茜  ·  FAST, BUT PRECISE", 11, W / 2, 128, INK, "middle", ls=3)}
+  {grain(W, H, 0.10)}
 </svg>'''
 
 
 if __name__ == "__main__":
     OUT.mkdir(exist_ok=True)
     write("hero.svg", hero())
-    write("stack.svg", stack())
-    write("stats.svg", stats())
+    write("works.svg", works())
+    write("numbers.svg", numbers())
     write("footer.svg", footer())
-    write("card-carrier.svg", card(
-        "carrier", "01", "carrier", "Cross-platform runtime & workflow tooling",
-        ["PR review operations", "CI / workflow quality gates", "release-flow + docs maintenance"],
-        AKANE, "GITHUB.COM/KEITH-CY/CARRIER ↗"))
-    write("card-fiber-link.svg", card(
-        "fiber-link", "02", "fiber-link", "CKB Fiber tipping & payments stack",
-        ["milestone closeout reviews", "workflow hardening + smoke validation", "runbooks + acceptance evidence"],
-        CYAN, "GITHUB.COM/KEITH-CY/FIBER-LINK ↗"))
-    write("card-war.svg", card(
-        "war", "03", "war.md", "Replayable coding-battle & eval arena",
-        ["deterministic, replayable runs", "text-first agent battles", "practical tooling experiments"],
-        AMBER, "WAR.MD ↗"))
-    write("card-now.svg", card(
-        "now", "04", "now()", "What I'm shipping this quarter",
-        ["reliability hardening for runtime systems", "faster PR / review loops via automation", "docs an operator can use at 3 AM"],
-        MINT, "STATUS: BUILDING ●"))
